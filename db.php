@@ -34,7 +34,7 @@ class plugins_textseo_db
 							JOIN mc_textseo_content AS c USING ( id_to )
 							JOIN mc_lang AS lang ON ( c.id_lang = lang.id_lang )
 							WHERE c.id_lang = :default_lang
-							GROUP BY p.id_to" . $limit;
+							" . $limit;
 
                     if (isset($config['search'])) {
                         $cond = '';
@@ -66,7 +66,7 @@ class plugins_textseo_db
 									JOIN mc_textseo_content AS c USING ( id_to )
 									JOIN mc_lang AS lang ON ( c.id_lang = lang.id_lang )
 									WHERE c.id_lang = :default_lang $cond
-									GROUP BY p.id_to" . $limit;
+									" . $limit;
                         }
                     }
                     break;
@@ -130,32 +130,28 @@ class plugins_textseo_db
             return $sql ? component_routing_db::layer()->fetch($sql, $params) : null;
         }
     }
+
     /**
-     * @param $config
+     * @param array $config
      * @param array $params
      * @return bool|string
      */
-    public function insert($config,$params = array())
-    {
-        if (!is_array($config)) return '$config must be an array';
-
-        $sql = '';
-
+    public function insert(array $config, array $params = []) {
         switch ($config['type']) {
             case 'page':
-                $sql = "INSERT INTO `mc_textseo`(type_to, date_register) 
+                $query = "INSERT INTO `mc_textseo`(type_to, date_register) 
                         VALUE (:type_to, NOW())";
                 break;
             case 'content':
-                $sql = 'INSERT INTO `mc_textseo_content`(id_to, id_lang, content_to, last_update) 
+                $query = 'INSERT INTO `mc_textseo_content`(id_to, id_lang, content_to, last_update) 
 				  		VALUES (:id_to, :id_lang, :content_to, NOW())';
                 break;
+            default:
+                return false;
         }
 
-        if($sql === '') return 'Unknown request asked';
-
         try {
-            component_routing_db::layer()->insert($sql,$params);
+            component_routing_db::layer()->insert($query,$params);
             return true;
         }
         catch (Exception $e) {
@@ -163,70 +159,64 @@ class plugins_textseo_db
         }
     }
     /**
-     * @param $config
+     * @param array $config
      * @param array $params
      * @return bool|string
      */
-    public function update($config,$params = array())
-    {
-        if (!is_array($config)) return '$config must be an array';
-
-        $sql = '';
-
+    public function update(array $config, array $params = []) {
         switch ($config['type']) {
             case 'page':
-                $sql = 'UPDATE mc_textseo 
+                $query = 'UPDATE mc_textseo 
 						SET 
 						    type_to = :type_to
 
                 		WHERE id_to = :id_to';
                 break;
             case 'content':
-                $sql = 'UPDATE mc_textseo_content 
+                $query = 'UPDATE mc_textseo_content 
 						SET 
 						    content_to = :content_to
 
                 		WHERE id_to = :id_to 
                 		AND id_lang = :id_lang';
                 break;
+            default:
+                return false;
         }
 
-        if($sql === '') return 'Unknown request asked';
-
         try {
-            component_routing_db::layer()->update($sql,$params);
+            component_routing_db::layer()->update($query,$params);
             return true;
         }
         catch (Exception $e) {
             return 'Exception reçue : '.$e->getMessage();
         }
     }
-    /**
-     * @param $config
-     * @param array $params
-     * @return bool|string
-     */
-    public function delete($config, $params = array())
-    {
-        if (!is_array($config)) return '$config must be an array';
-        $sql = '';
 
+    /**
+     * @param array $config
+     * @param array $params
+     * @return bool
+     */
+    protected function delete(array $config, array $params = []): bool {
         switch ($config['type']) {
             case 'delPages':
-                $sql = 'DELETE FROM mc_textseo 
+                $query = 'DELETE FROM mc_textseo 
 						WHERE id_to IN ('.$params['id'].')';
-                $params = array();
+                $params = [];
                 break;
+            default:
+                return false;
         }
 
-        if($sql === '') return 'Unknown request asked';
-
         try {
-            component_routing_db::layer()->delete($sql,$params);
+            component_routing_db::layer()->delete($query,$params);
             return true;
         }
         catch (Exception $e) {
-            return 'Exception reçue : '.$e->getMessage();
+            if(!isset($this->logger)) $this->logger = new debug_logger(MP_LOG_DIR);
+            $this->logger->log('statement','db',$e->getMessage(),$this->logger::LOG_MONTH);
         }
+        return false;
     }
 }

@@ -1,5 +1,4 @@
 <?php
-require_once('db.php');
 class plugins_textseo_admin extends plugins_textseo_db
 {
     protected $controller,$data,$template, $message, $plugin,$modelLanguage,$collectionLanguage,$header, $tableaction;
@@ -143,21 +142,16 @@ class plugins_textseo_admin extends plugins_textseo_db
     }
 
     /**
-     * Update data
-     * @param $data
-     * @throws Exception
+     * @param array $config
+     * @return void
      */
-    private function add($data)
-    {
-        switch ($data['type']) {
+    private function add(array $config) {
+        switch ($config['type']) {
             case 'page':
             case 'content':
                 parent::insert(
-                    array(
-                        'context' => $data['context'],
-                        'type' => $data['type']
-                    ),
-                    $data['data']
+                    ['type' => $config['type']],
+                    $config['data']
                 );
                 break;
         }
@@ -165,20 +159,15 @@ class plugins_textseo_admin extends plugins_textseo_db
 
     /**
      * Update data
-     * @param $data
-     * @throws Exception
+     * @param array $config
      */
-    private function upd($data)
-    {
-        switch ($data['type']) {
+    private function upd(array $config) {
+        switch ($config['type']) {
             case 'page':
             case 'content':
                 parent::update(
-                    array(
-                        'context' => $data['context'],
-                        'type' => $data['type']
-                    ),
-                    $data['data']
+                    ['type' => $config['type']],
+                    $config['data']
                 );
                 break;
         }
@@ -202,6 +191,7 @@ class plugins_textseo_admin extends plugins_textseo_db
                 break;
         }
     }
+
     /**
      * @param $id
      * @return void
